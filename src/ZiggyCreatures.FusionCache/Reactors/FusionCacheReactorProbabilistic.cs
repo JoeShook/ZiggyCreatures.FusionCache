@@ -69,6 +69,7 @@ namespace ZiggyCreatures.Caching.Fusion.Reactors
 				if (logger?.IsEnabled(LogLevel.Trace) ?? false)
 					logger.LogTrace("FUSION (K={CacheKey} OP={CacheOperationId}): LOCK " + (key2 is null ? "maybe " : string.Empty) + "acquired for a different key (current key: " + key + ", other key: " + key2 + ")", key, operationId);
 
+				//TODO: Add an event counter?
 				Interlocked.Increment(ref _lockPoolCollisions);
 			}
 

@@ -13,6 +13,7 @@ using ZiggyCreatures.Caching.Fusion.Internals.Memory;
 using ZiggyCreatures.Caching.Fusion.Reactors;
 using ZiggyCreatures.Caching.Fusion.Serialization;
 
+
 namespace ZiggyCreatures.Caching.Fusion
 {
 
@@ -20,21 +21,28 @@ namespace ZiggyCreatures.Caching.Fusion
 	public class FusionCache
 		: IFusionCache
 	{
-
 		private readonly FusionCacheOptions _options;
 		private readonly ILogger? _logger;
 		private readonly IFusionCacheReactor _reactor;
 		private MemoryCacheAccessor _mca;
 		private DistributedCacheAccessor? _dca;
-
-		/// <summary>
-		/// Creates a new <see cref="FusionCache"/> instance.
-		/// </summary>
-		/// <param name="optionsAccessor">The set of cache-wide options to use with this instance of <see cref="FusionCache"/>.</param>
-		/// <param name="memoryCache">The <see cref="IMemoryCache"/> instance to use. If null, one will be automatically created and managed.</param>
-		/// <param name="logger">The <see cref="ILogger{TCategoryName}"/> instance to use. If null, logging will be completely disabled.</param>
-		/// <param name="reactor">The <see cref="IFusionCacheReactor"/> instance to use (advanced). If null, a standard one will be automatically created and managed.</param>
-		public FusionCache(IOptions<FusionCacheOptions> optionsAccessor, IMemoryCache? memoryCache = null, ILogger<FusionCache>? logger = null, IFusionCacheReactor? reactor = null)
+#if NETSTANDARD2_1
+        private FusionCacheEventSource _eventSource;
+#endif
+        /// <summary>
+        /// Creates a new <see cref="FusionCache"/> instance.
+        /// </summary>
+        /// <param name="optionsAccessor">The set of cache-wide options to use with this instance of <see cref="FusionCache"/>.</param>
+        /// <param name="memoryCache">The <see cref="IMemoryCache"/> instance to use. If null, one will be automatically created and managed.</param>
+        /// <param name="logger">The <see cref="ILogger{TCategoryName}"/> instance to use. If null, logging will be completely disabled.</param>
+        /// <param name="reactor">The <see cref="IFusionCacheReactor"/> instance to use (advanced). If null, a standard one will be automatically created and managed.</param>
+        /// <param name="eventSource"></param>
+        /// <param name="cacheName"></param>
+        public FusionCache(IOptions<FusionCacheOptions> optionsAccessor, IMemoryCache? memoryCache = null, ILogger<FusionCache>? logger = null, IFusionCacheReactor? reactor = null
+#if NETSTANDARD2_1
+			, FusionCacheEventSource? eventSource = null, string cacheName = FusionCacheEventSource.DefaultCacheName
+#endif
+			)
 		{
 			if (optionsAccessor is null)
 				throw new ArgumentNullException(nameof(optionsAccessor));
@@ -56,6 +64,10 @@ namespace ZiggyCreatures.Caching.Fusion
 			// REACTOR
 			_reactor = reactor ?? new FusionCacheReactorStandard();
 
+			// EventSource
+#if NETSTANDARD2_1
+            _eventSource = eventSource ?? FusionCacheEventSource.LogByName(cacheName);
+#endif
 			// MEMORY CACHE
 			_mca = new MemoryCacheAccessor(memoryCache, _options, _logger);
 
@@ -262,6 +274,9 @@ namespace ZiggyCreatures.Caching.Fusion
 			{
 				if (_logger?.IsEnabled(LogLevel.Trace) ?? false)
 					_logger.LogTrace("FUSION (K={CacheKey} OP={CacheOperationId}): using memory entry", key, operationId);
+#if NETSTANDARD2_1
+				_eventSource.CacheHit();
+#endif
 				return _memoryEntry;
 			}
 
@@ -274,6 +289,10 @@ namespace ZiggyCreatures.Caching.Fusion
 				{
 					if (_logger?.IsEnabled(LogLevel.Trace) ?? false)
 						_logger.LogTrace("FUSION (K={CacheKey} OP={CacheOperationId}): using memory entry (expired)", key, operationId);
+#if NETSTANDARD2_1
+					_eventSource.CacheHit();
+                    // Maybe Create a CacheHitExpired Counter also?
+#endif
 					return _memoryEntry;
 				}
 
@@ -293,6 +312,9 @@ namespace ZiggyCreatures.Caching.Fusion
 				{
 					if (_logger?.IsEnabled(LogLevel.Trace) ?? false)
 						_logger.LogTrace("FUSION (K={CacheKey} OP={CacheOperationId}): using memory entry", key, operationId);
+#if NETSTANDARD2_1
+					_eventSource.CacheHit();
+#endif
 					return _memoryEntry;
 				}
 
@@ -325,6 +347,10 @@ namespace ZiggyCreatures.Caching.Fusion
 						}
 						else
 						{
+#if NETSTANDARD2_1
+                            // Feels different than a cache miss as this throws an exception higher in the stack.  Thinking... 
+                            _eventSource.CacheMiss();
+#endif
 							return null;
 						}
 					}
@@ -385,6 +411,10 @@ namespace ZiggyCreatures.Caching.Fusion
 				if (_entry is object)
 				{
 					_mca.SetEntry<TValue>(operationId, key, _entry.AsMemoryEntry(), options);
+#if NETSTANDARD2_1
+                    _eventSource.CacheMiss();
+#endif
+
 				}
 			}
 			finally
@@ -412,6 +442,9 @@ namespace ZiggyCreatures.Caching.Fusion
 			{
 				if (_logger?.IsEnabled(LogLevel.Trace) ?? false)
 					_logger.LogTrace("FUSION (K={CacheKey} OP={CacheOperationId}): using memory entry", key, operationId);
+#if NETSTANDARD2_1
+                _eventSource.CacheHit();
+#endif
 				return _memoryEntry;
 			}
 
@@ -424,6 +457,9 @@ namespace ZiggyCreatures.Caching.Fusion
 				{
 					if (_logger?.IsEnabled(LogLevel.Trace) ?? false)
 						_logger.LogTrace("FUSION (K={CacheKey} OP={CacheOperationId}): using memory entry (expired)", key, operationId);
+#if NETSTANDARD2_1
+                    _eventSource.CacheHit();
+#endif
 					return _memoryEntry;
 				}
 
@@ -443,6 +479,9 @@ namespace ZiggyCreatures.Caching.Fusion
 				{
 					if (_logger?.IsEnabled(LogLevel.Trace) ?? false)
 						_logger.LogTrace("FUSION (K={CacheKey} OP={CacheOperationId}): using memory entry", key, operationId);
+#if NETSTANDARD2_1
+                    _eventSource.CacheHit();
+#endif
 					return _memoryEntry;
 				}
 
@@ -475,6 +514,10 @@ namespace ZiggyCreatures.Caching.Fusion
 						}
 						else
 						{
+#if NETSTANDARD2_1
+							// Feels different than a cache miss as this throws an exception higher in the stack.  Thinking... 
+                            _eventSource.CacheMiss();
+#endif
 							return null;
 						}
 					}
@@ -535,6 +578,9 @@ namespace ZiggyCreatures.Caching.Fusion
 				if (_entry is object)
 				{
 					_mca.SetEntry<TValue>(operationId, key, _entry.AsMemoryEntry(), options);
+#if NETSTANDARD2_1
+                    _eventSource.CacheMiss();
+#endif
 				}
 			}
 			finally
@@ -628,12 +674,17 @@ namespace ZiggyCreatures.Caching.Fusion
 			{
 				if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 					_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return NO SUCCESS", key, operationId);
-
+#if NETSTANDARD2_1
+                _eventSource.CacheMiss();
+#endif
 				return MaybeValue<TValue>.None;
 			}
 
 			if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 				_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return SUCCESS", key, operationId);
+#if NETSTANDARD2_1
+            _eventSource.CacheHit();
+#endif
 
 			return MaybeValue<TValue>.FromValue(entry.GetValue<TValue>());
 		}
@@ -658,12 +709,17 @@ namespace ZiggyCreatures.Caching.Fusion
 			{
 				if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 					_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return NO SUCCESS", key, operationId);
-
+#if NETSTANDARD2_1
+                _eventSource.CacheMiss();
+#endif
 				return MaybeValue<TValue>.None;
 			}
 
 			if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 				_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return SUCCESS", key, operationId);
+#if NETSTANDARD2_1
+            _eventSource.CacheHit();
+#endif
 
 			return MaybeValue<TValue>.FromValue(entry.GetValue<TValue>());
 		}
@@ -688,6 +744,9 @@ namespace ZiggyCreatures.Caching.Fusion
 			{
 				if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 					_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return DEFAULT VALUE", key, operationId);
+#if NETSTANDARD2_1
+                _eventSource.CacheMiss();
+#endif
 #pragma warning disable CS8603 // Possible null reference return.
 				return defaultValue;
 #pragma warning restore CS8603 // Possible null reference return.
@@ -695,6 +754,9 @@ namespace ZiggyCreatures.Caching.Fusion
 
 			if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 				_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return {Entry}", key, operationId, entry.ToLogString());
+#if NETSTANDARD2_1
+            _eventSource.CacheHit();
+#endif
 			return entry.GetValue<TValue>();
 		}
 
@@ -718,6 +780,9 @@ namespace ZiggyCreatures.Caching.Fusion
 			{
 				if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 					_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return DEFAULT VALUE", key, operationId);
+#if NETSTANDARD2_1
+                _eventSource.CacheMiss();
+#endif
 #pragma warning disable CS8603 // Possible null reference return.
 				return defaultValue;
 #pragma warning restore CS8603 // Possible null reference return.
@@ -725,6 +790,9 @@ namespace ZiggyCreatures.Caching.Fusion
 
 			if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 				_logger.LogDebug("FUSION (K={CacheKey} OP={CacheOperationId}): return {Entry}", key, operationId, entry.ToLogString());
+#if NETSTANDARD2_1
+            _eventSource.CacheHit();
+#endif
 			return entry.GetValue<TValue>();
 		}
 

@@ -38,7 +38,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public async Task ReturnsDataFromDistributedCacheIfNoDataInMemoryCacheAsync(SerializerType serializerType)
 		{
 			using (var memoryCache = new MemoryCache(new MemoryCacheOptions()))
@@ -56,7 +58,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public void ReturnsDataFromDistributedCacheIfNoDataInMemoryCache(SerializerType serializerType)
 		{
 			using (var memoryCache = new MemoryCache(new MemoryCacheOptions()))
@@ -247,7 +251,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public async Task DistributedCacheCircuitBreakerActuallyWorksAsync(SerializerType serializerType)
 		{
 			var circuitBreakerDuration = TimeSpan.FromSeconds(2);
@@ -277,7 +283,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public void DistributedCacheCircuitBreakerActuallyWorks(SerializerType serializerType)
 		{
 			var circuitBreakerDuration = TimeSpan.FromSeconds(2);
@@ -307,7 +315,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public async Task HandlesFlexibleSimpleTypeConversionsAsync(SerializerType serializerType)
 		{
 			using (var memoryCache = new MemoryCache(new MemoryCacheOptions()))
@@ -326,7 +336,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public void HandlesFlexibleSimpleTypeConversions(SerializerType serializerType)
 		{
 			using (var memoryCache = new MemoryCache(new MemoryCacheOptions()))
@@ -345,7 +357,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public async Task HandlesFlexibleComplexTypeConversionsAsync(SerializerType serializerType)
 		{
 			using (var memoryCache = new MemoryCache(new MemoryCacheOptions()))
@@ -364,7 +378,9 @@ namespace ZiggyCreatures.Caching.Fusion.Tests
 
 		[Theory]
 		[InlineData(SerializerType.NewtonsoftJson)]
+#if NETCOREAPP3_1
 		[InlineData(SerializerType.SystemTextJson)]
+#endif
 		public void HandlesFlexibleComplexTypeConversions(SerializerType serializerType)
 		{
 			using (var memoryCache = new MemoryCache(new MemoryCacheOptions()))
